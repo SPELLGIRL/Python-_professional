@@ -42,7 +42,7 @@ class MainWindow(QMainWindow):
         file_menu.addAction(save_file)
 
         # Выйти
-        app_exit = QAction(QIcon('save.png'), 'Выйти', self)
+        app_exit = QAction(QIcon('exit.png'), 'Выйти', self)
         app_exit.setShortcut('Ctrl+Q')
         app_exit.setStatusTip('Выход')
         app_exit.triggered.connect(app.exit)
@@ -75,7 +75,7 @@ class MainWindow(QMainWindow):
         filter_menu.addAction(sepia_action)
 
         # Оригинал
-        original_action = QAction(QIcon('sepia.png'), 'Original', self)
+        original_action = QAction(QIcon('original.png'), 'Original', self)
         original_action.setStatusTip('Оригинал')
         original_action.triggered.connect(lambda: self.return_original_image())
         filter_menu.addAction(original_action)
