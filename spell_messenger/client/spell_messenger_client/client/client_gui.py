@@ -55,6 +55,9 @@ class UiMainClientWindow(object):
         self.action_underlined = QAction(
             QIcon(os.path.join(STATIC, 'img/u.jpg')), 'Underlined',
             self.text_message)
+        self.action_smile = QAction(
+            QIcon(os.path.join(STATIC, 'img/smile.gif')), 'smile',
+            self.text_message)
         self.list_contacts = QListView(self.centralwidget)
         self.list_contacts.setGeometry(QRect(10, 20, 251, 411))
         self.list_contacts.setObjectName("list_contacts")
@@ -171,9 +174,11 @@ class ClientMainWindow(QMainWindow):
         self.ui.action_bold.triggered.connect(self.action_bold)
         self.ui.action_italic.triggered.connect(self.action_italic)
         self.ui.action_underlined.triggered.connect(self.action_underlined)
+        self.ui.action_smile.triggered.connect(lambda: self.action_smile('img/smile.gif'))
         self.ui.text_menu.addAction(self.ui.action_bold)
         self.ui.text_menu.addAction(self.ui.action_italic)
         self.ui.text_menu.addAction(self.ui.action_underlined)
+        self.ui.text_menu.addAction(self.ui.action_smile)
 
         # Дополнительные требующиеся атрибуты
         self.contacts_model = None
@@ -451,6 +456,9 @@ class ClientMainWindow(QMainWindow):
         myFont = QFont()
         myFont.setUnderline(True)
         self.ui.text_message.setFont(myFont)
+
+    def action_smile(self, url):
+        self.ui.text_message.textCursor().insertHtml(f'<img src="{os.path.join(STATIC, url)}" />')
 
     # Слот приёма нового сообщений
     @pyqtSlot(Message)
