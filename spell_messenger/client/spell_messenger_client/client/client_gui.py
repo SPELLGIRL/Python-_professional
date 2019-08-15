@@ -3,13 +3,15 @@ import os
 
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
+from PIL import Image, ImageDraw
+from PIL.ImageQt import ImageQt
 from PyQt5.QtCore import QSize, QMetaObject, QRect, pyqtSlot, Qt, \
     QCoreApplication
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QBrush, QColor, \
-    QIcon, QFont
+    QIcon, QFont, QPixmap
 from PyQt5.QtWidgets import QListView, QMenuBar, QMenu, QStatusBar, QAction, \
     QTextEdit, QWidget, QMainWindow, qApp, QMessageBox, QDialog, QPushButton, \
-    QLineEdit, QLabel, QComboBox
+    QLineEdit, QLabel, QComboBox, QFileDialog, QHBoxLayout, QDesktopWidget
 
 from jim.utils import Message
 from .exceptions import ServerError
@@ -69,10 +71,12 @@ class UiMainClientWindow(object):
         self.menubar = QMenuBar(main_client_window)
         self.menubar.setGeometry(QRect(0, 0, 756, 21))
         self.menubar.setObjectName("menubar")
-        self.menu = QMenu(self.menubar)
-        self.menu.setObjectName("menu")
-        self.menu_2 = QMenu(self.menubar)
-        self.menu_2.setObjectName("menu_2")
+        self.menu_file = QMenu(self.menubar)
+        self.menu_file.setObjectName("file")
+        self.menu_contacts = QMenu(self.menubar)
+        self.menu_contacts.setObjectName("contacts")
+        self.menu_profile = QMenu(self.menubar)
+        self.menu_profile.setObjectName("profile")
         main_client_window.setMenuBar(self.menubar)
         self.statusBar = QStatusBar(main_client_window)
         self.statusBar.setObjectName("statusBar")
@@ -83,12 +87,17 @@ class UiMainClientWindow(object):
         self.menu_add_contact.setObjectName("menu_add_contact")
         self.menu_del_contact = QAction(main_client_window)
         self.menu_del_contact.setObjectName("menu_del_contact")
-        self.menu.addAction(self.menu_exit)
-        self.menu_2.addAction(self.menu_add_contact)
-        self.menu_2.addAction(self.menu_del_contact)
-        self.menu_2.addSeparator()
-        self.menubar.addAction(self.menu.menuAction())
-        self.menubar.addAction(self.menu_2.menuAction())
+        self.menu_file.addAction(self.menu_exit)
+        self.menu_contacts.addAction(self.menu_add_contact)
+        self.menu_contacts.addAction(self.menu_del_contact)
+        self.menu_contacts.addSeparator()
+        self.menu_profile_avatar = QAction(main_client_window)
+        self.menu_profile_avatar.setObjectName("menu_profile_avatar")
+        self.menu_profile.addAction(self.menu_profile_avatar)
+        self.menu_profile.addSeparator()
+        self.menubar.addAction(self.menu_file.menuAction())
+        self.menubar.addAction(self.menu_contacts.menuAction())
+        self.menubar.addAction(self.menu_profile.menuAction())
         self.retranslate_ui(main_client_window)
         self.btn_clear.clicked.connect(self.text_message.clear)
         QMetaObject.connectSlotsByName(main_client_window)
@@ -110,9 +119,12 @@ class UiMainClientWindow(object):
         self.btn_send.setText(
             _translate("MainClientWindow", "Отправить сообщение"))
         self.btn_clear.setText(_translate("MainClientWindow", "Очистить поле"))
-        self.menu.setTitle(_translate("MainClientWindow", "Файл"))
-        self.menu_2.setTitle(_translate("MainClientWindow", "Контакты"))
+        self.menu_file.setTitle(_translate("MainClientWindow", "Файл"))
+        self.menu_contacts.setTitle(_translate("MainClientWindow", "Контакты"))
+        self.menu_profile.setTitle(_translate("MainClientWindow", "Профиль"))
         self.menu_exit.setText(_translate("MainClientWindow", "Выход"))
+        self.menu_profile_avatar.setText(
+            _translate("MainClientWindow", "Аватар"))
         self.menu_add_contact.setText(
             _translate("MainClientWindow", "Добавить контакт"))
         self.menu_del_contact.setText(
@@ -135,12 +147,17 @@ class ClientMainWindow(QMainWindow):
 
         self.select_dialog = None
         self.remove_dialog = None
+        self.avatar_window = None
 
         # Кнопка "Выход"
         self.ui.menu_exit.triggered.connect(qApp.exit)
 
         # Кнопка отправить сообщение
         self.ui.btn_send.clicked.connect(self.send_message)
+
+        # "Аватар пользователя"
+        self.ui.menu_profile_avatar.triggered.connect(
+            self.profile_avatar_window)
 
         # "добавить контакт"
         self.ui.btn_add_contact.clicked.connect(self.add_contact_window)
@@ -292,6 +309,10 @@ class ClientMainWindow(QMainWindow):
             item.setEditable(False)
             self.contacts_model.appendRow(item)
         self.ui.list_contacts.setModel(self.contacts_model)
+
+    def profile_avatar_window(self):
+        self.avatar_window = AvatarWindow(self)
+        self.avatar_window.show()
 
     def add_contact_window(self):
         """
@@ -503,6 +524,208 @@ class ClientMainWindow(QMainWindow):
         """
         trans_obj.new_message.connect(self.message)
         trans_obj.connection_lost.connect(self.connection_lost)
+
+
+class AvatarWindow(QWidget):
+    def __init__(self, parent):
+        super().__init__(parent, Qt.Window)
+        self.main = parent
+        self.width = 400
+        self.height = 400
+        self.filtering_image = None
+        self.current_image = None
+        self.h_box = QHBoxLayout(self)
+        self.label = QLabel(self)
+
+        self.init_ui()
+
+    def init_ui(self):
+        self.h_box.addWidget(self.label)
+        self.setLayout(self.h_box)
+
+        # Меню
+        menu_bar = QMenuBar(self)
+        menu_bar.setFixedWidth(self.width)
+        file_menu = menu_bar.addMenu('Файл')
+        filter_menu = menu_bar.addMenu('Фильтр')
+
+        # Открыть файл
+        open_file = QAction(QIcon('open.png'), 'Открыть...', self)
+        open_file.setShortcut('Ctrl+O')
+        open_file.setStatusTip('Открыть файл')
+        open_file.triggered.connect(self.open_dialog)
+        file_menu.addAction(open_file)
+
+        # Сохранить файл
+        save_file = QAction(QIcon('save.png'), 'Сохранить', self)
+        save_file.setShortcut('Ctrl+S')
+        save_file.setStatusTip('Сохранить файл')
+        save_file.triggered.connect(self.save_dialog)
+        file_menu.addAction(save_file)
+
+        # Выйти
+        close_action = QAction(QIcon('exit.png'), 'Закрыть', self)
+        close_action.setShortcut('Ctrl+Q')
+        close_action.setStatusTip('Закрыть')
+        close_action.triggered.connect(lambda: self.close_window())
+        file_menu.addAction(close_action)
+
+        # Фильтры
+        # Оттенки серого
+        gray_action = QAction(QIcon('gray.png'), 'Grey', self)
+        gray_action.setStatusTip('Оттенки серого')
+        gray_action.triggered.connect(lambda: self.process_filter('grey'))
+        filter_menu.addAction(gray_action)
+
+        # ЧБ
+        bw_action = QAction(QIcon('bw.png'), 'BW', self)
+        bw_action.setStatusTip('ЧБ')
+        bw_action.triggered.connect(lambda: self.process_filter('bw'))
+        filter_menu.addAction(bw_action)
+
+        # Негатив
+        negative_action = QAction(QIcon('negative.png'), 'Negative', self)
+        negative_action.setStatusTip('Обратные цвета')
+        negative_action.triggered.connect(
+            lambda: self.process_filter('negative'))
+        filter_menu.addAction(negative_action)
+
+        # Сепия
+        sepia_action = QAction(QIcon('sepia.png'), 'Sepia', self)
+        sepia_action.setStatusTip('Сепия')
+        sepia_action.triggered.connect(lambda: self.process_filter('sepia'))
+        filter_menu.addAction(sepia_action)
+
+        # Оригинал
+        original_action = QAction(QIcon('original.png'), 'Original', self)
+        original_action.setStatusTip('Оригинал')
+        original_action.triggered.connect(lambda: self.return_original_image())
+        filter_menu.addAction(original_action)
+
+        self.set_geometry()
+        self.setWindowTitle('Установка аватара')
+
+        image_path = os.path.join(STATIC, f'img/avatar_{self.main.transport.user_name}.jpg')
+        if os.path.exists(image_path):
+            image = Image.open(image_path)
+            self.filtering_image = ProcessingImage(image)
+            self.current_image = self.filtering_image
+            self.reload_image(self.filtering_image)
+
+    def close_window(self):
+        self.close()
+
+    def set_geometry(self):
+        desktop = QDesktopWidget().availableGeometry()
+        left = int((desktop.width() - self.width) / 2)
+        top = int((desktop.height() - self.height) / 2)
+        self.setGeometry(0,0,self.width, self.height)
+        self.setFixedSize(self.width, self.height)
+        self.move(left, top)
+
+    def reload_image(self, file_path):
+        image = ImageQt(file_path.to_qt())
+        pix_map = QPixmap.fromImage(image)
+        self.label.resize(self.width, self.height)
+        if pix_map.width() > self.width or pix_map.height() > self.height:
+            pix_map = pix_map.scaled(self.width-25, self.height-25,
+                                     Qt.KeepAspectRatio)
+        if pix_map.width() <= self.width:
+            self.label.move((self.width - pix_map.width()) / 2, 0)
+        self.label.setPixmap(pix_map)
+
+    def open_dialog(self):
+        file_path = QFileDialog.getOpenFileName(self, 'Открыть файл')[0]
+        if file_path:
+            image = Image.open(file_path)
+            self.filtering_image = ProcessingImage(image)
+            self.current_image = self.filtering_image
+            self.reload_image(self.filtering_image)
+
+    def save_dialog(self):
+        self.current_image.image.save(os.path.join(STATIC, f'img/avatar_{self.main.transport.user_name}.jpg'))
+
+    def return_original_image(self):
+        if self.filtering_image:
+            self.current_image = self.filtering_image
+            self.reload_image(self.filtering_image)
+
+    def process_filter(self, filter_name):
+        if self.filtering_image:
+            filter_method = getattr(self.filtering_image, filter_name)
+            result = filter_method()
+            self.current_image = result
+            self.reload_image(result)
+
+
+class ProcessingImage:
+    def __init__(self, image):
+        self.image = image.copy()
+        self.draw = ImageDraw.Draw(self.image)
+        self.width = self.image.size[0]
+        self.height = self.image.size[1]
+        self.pix = self.image.load()
+
+    def to_qt(self):
+        return self.image.convert('RGBA')
+
+    def grey(self):
+        new_image = ProcessingImage(self.image)
+        for i in range(new_image.width):
+            for j in range(new_image.height):
+                a = new_image.pix[i, j][0]
+                b = new_image.pix[i, j][1]
+                c = new_image.pix[i, j][2]
+                S = (a + b + c) // 3
+                new_image.draw.point((i, j), (S, S, S))
+        return new_image
+
+    def bw(self):
+        new_image = ProcessingImage(self.image)
+        factor = 50
+        for i in range(new_image.width):
+            for j in range(new_image.height):
+                a = new_image.pix[i, j][0]
+                b = new_image.pix[i, j][1]
+                c = new_image.pix[i, j][2]
+                s = a + b + c
+                if s > (((255 + factor) // 2) * 3):
+                    a, b, c = 255, 255, 255
+                else:
+                    a, b, c = 0, 0, 0
+                new_image.draw.point((i, j), (a, b, c))
+        return new_image
+
+    def negative(self):
+        new_image = ProcessingImage(self.image)
+        for i in range(new_image.width):
+            for j in range(new_image.height):
+                a = new_image.pix[i, j][0]
+                b = new_image.pix[i, j][1]
+                c = new_image.pix[i, j][2]
+                new_image.draw.point((i, j), (255 - a, 255 - b, 255 - c))
+        return new_image
+
+    def sepia(self):
+        new_image = ProcessingImage(self.image)
+        depth = 30
+        for i in range(new_image.width):
+            for j in range(new_image.height):
+                a = new_image.pix[i, j][0]
+                b = new_image.pix[i, j][1]
+                c = new_image.pix[i, j][2]
+                S = (a + b + c)
+                a = S + depth * 2
+                b = S + depth
+                c = S
+                if a > 255:
+                    a = 255
+                if b > 255:
+                    b = 255
+                if c > 255:
+                    c = 255
+                new_image.draw.point((i, j), (a, b, c))
+        return new_image
 
 
 class UserNameDialog(QDialog):

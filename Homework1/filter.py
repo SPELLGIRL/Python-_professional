@@ -13,6 +13,8 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.filtering_image = None
         self.current_image = None
+        self.width = 400
+        self.height = 400
         self.h_box = QHBoxLayout(self)
         self.label = QLabel(self)
 
@@ -85,21 +87,19 @@ class MainWindow(QMainWindow):
         self.show()
 
     def set_geometry(self):
-        width = 400
-        height = 400
-        left = int((app.desktop().width() - width) / 2)
-        top = int((app.desktop().height() - height) / 2)
-        self.setGeometry(0, 0, width, height)
+        left = int((app.desktop().width() - self.width) / 2)
+        top = int((app.desktop().height() - self.height) / 2)
+        self.setFixedSize(self.width, self.height)
         self.move(left, top)
 
     def reload_image(self, file_path):
         image = ImageQt(file_path.to_qt())
         pix_map = QPixmap.fromImage(image)
-        self.label.resize(400, 400)
-        if pix_map.width() > 400 or pix_map.height() > 400:
-            pix_map = pix_map.scaled(400, 400, Qt.KeepAspectRatio)
-        if pix_map.width() <= 400:
-            self.label.move((400 - pix_map.width()) / 2, 0)
+        self.label.resize(self.width, self.height)
+        if pix_map.width() > self.width or pix_map.height() > self.height:
+            pix_map = pix_map.scaled(self.width, self.height, Qt.KeepAspectRatio)
+        if pix_map.width() <= self.width:
+            self.label.move((self.width - pix_map.width()) / 2, 0)
         self.label.setPixmap(pix_map)
 
     def open_dialog(self):
