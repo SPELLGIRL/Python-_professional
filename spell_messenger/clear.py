@@ -35,3 +35,12 @@ if __name__ == '__main__':
             ) or re.fullmatch(pattern, file):
                 print(os.path.join(root, file))
                 os.remove(os.path.join(root, file))
+        for dir_path in dirs:
+            full_path = os.path.join(root, dir_path)
+            if dir_path == 'avatars':
+                for name in os.listdir(full_path):
+                    file_path = os.path.join(full_path, name)
+                    print(file_path)
+                    os.remove(file_path)
+                print(os.path.join(root, dir_path))
+                os.removedirs(full_path)

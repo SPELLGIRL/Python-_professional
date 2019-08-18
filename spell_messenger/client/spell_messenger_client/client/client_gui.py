@@ -174,7 +174,8 @@ class ClientMainWindow(QMainWindow):
         self.ui.action_bold.triggered.connect(self.action_bold)
         self.ui.action_italic.triggered.connect(self.action_italic)
         self.ui.action_underlined.triggered.connect(self.action_underlined)
-        self.ui.action_smile.triggered.connect(lambda: self.action_smile('img/smile.gif'))
+        self.ui.action_smile.triggered.connect(
+            lambda: self.action_smile('img/smile.gif'))
         self.ui.text_menu.addAction(self.ui.action_bold)
         self.ui.text_menu.addAction(self.ui.action_italic)
         self.ui.text_menu.addAction(self.ui.action_underlined)
@@ -317,6 +318,9 @@ class ClientMainWindow(QMainWindow):
 
     def profile_avatar_window(self):
         self.avatar_window = AvatarWindow(self)
+        img_folder = os.path.join(STATIC, 'avatars')
+        if not os.path.exists(img_folder):
+            os.mkdir(img_folder)
         self.avatar_window.show()
 
     def add_contact_window(self):
@@ -458,7 +462,8 @@ class ClientMainWindow(QMainWindow):
         self.ui.text_message.setFont(myFont)
 
     def action_smile(self, url):
-        self.ui.text_message.textCursor().insertHtml(f'<img src="{os.path.join(STATIC, url)}" />')
+        self.ui.text_message.textCursor().insertHtml(
+            f'<img src="{os.path.join(STATIC, url)}" />')
 
     # Слот приёма нового сообщений
     @pyqtSlot(Message)
@@ -613,12 +618,15 @@ class AvatarWindow(QWidget):
         self.set_geometry()
         self.setWindowTitle('Установка аватара')
 
-        image_path = os.path.join(STATIC, f'img/avatar_{self.main.transport.user_name}.jpg')
-        if os.path.exists(image_path):
-            image = Image.open(image_path)
-            self.filtering_image = ProcessingImage(image)
-            self.current_image = self.filtering_image
-            self.reload_image(self.filtering_image)
+        user = self.main.database.get_user_by_name(
+            self.main.transport.user_name)
+        if user and user.avatar:
+            image_path = os.path.join(STATIC, user.avatar)
+            if os.path.exists(image_path):
+                image = Image.open(image_path)
+                self.filtering_image = ProcessingImage(image)
+                self.current_image = self.filtering_image
+                self.reload_image(self.filtering_image)
 
     def close_window(self):
         self.close()
@@ -627,16 +635,27 @@ class AvatarWindow(QWidget):
         desktop = QDesktopWidget().availableGeometry()
         left = int((desktop.width() - self.width) / 2)
         top = int((desktop.height() - self.height) / 2)
-        self.setGeometry(0,0,self.width, self.height)
+        self.setGeometry(0, 0, self.width, self.height)
         self.setFixedSize(self.width, self.height)
         self.move(left, top)
+
+    def resize_crop(self, image):
+        # Изменение размера до допустимого максимума
+        old_size = image.size
+        ratio = float(self.width) / max(old_size)
+        new_size = tuple([int(x * ratio) for x in old_size])
+        image = image.resize(new_size, Image.ANTIALIAS)
+        image = image.resize(new_size, Image.ANTIALIAS)
+        # Обрезка до квадратного
+        image = image.crop((0, 0, min(new_size), min(new_size)))
+        return image
 
     def reload_image(self, file_path):
         image = ImageQt(file_path.to_qt())
         pix_map = QPixmap.fromImage(image)
         self.label.resize(self.width, self.height)
         if pix_map.width() > self.width or pix_map.height() > self.height:
-            pix_map = pix_map.scaled(self.width-25, self.height-25,
+            pix_map = pix_map.scaled(self.width - 25, self.height - 25,
                                      Qt.KeepAspectRatio)
         if pix_map.width() <= self.width:
             self.label.move((self.width - pix_map.width()) / 2, 0)
@@ -651,7 +670,10 @@ class AvatarWindow(QWidget):
             self.reload_image(self.filtering_image)
 
     def save_dialog(self):
-        self.current_image.image.save(os.path.join(STATIC, f'img/avatar_{self.main.transport.user_name}.jpg'))
+        image = self.resize_crop(self.current_image.image)
+        img_path = f'avatars/{self.main.transport.user_name}.jpg'
+        image.save(os.path.join(STATIC, img_path))
+        self.main.database.save_avatar(img_path)
 
     def return_original_image(self):
         if self.filtering_image:

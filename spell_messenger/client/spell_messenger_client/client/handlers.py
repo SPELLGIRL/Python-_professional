@@ -169,6 +169,7 @@ class Console:
             raise ConnectionResetError
         if not self.__client.auth(action):
             raise ServerError('Неправильный пароль.')
+        self.__repo.add_user()
         self.__repo.clear_contacts()
         for message in self.__client.load_contacts()[1:]:
             self.__repo.add_contact(message.user)
@@ -267,6 +268,7 @@ class Gui(QObject):
                 raise ConnectionResetError
             if not self.__client.auth(action):
                 raise ServerError('Неправильный пароль.')
+            self.__repo.add_user()
             self.__repo.clear_contacts()
             contacts = self.__client.load_contacts()
             if contacts:
