@@ -645,7 +645,6 @@ class AvatarWindow(QWidget):
         ratio = float(self.width) / max(old_size)
         new_size = tuple([int(x * ratio) for x in old_size])
         image = image.resize(new_size, Image.ANTIALIAS)
-        image = image.resize(new_size, Image.ANTIALIAS)
         # Обрезка до квадратного
         image = image.crop((0, 0, min(new_size), min(new_size)))
         return image
