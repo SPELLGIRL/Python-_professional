@@ -410,7 +410,7 @@ class ClientMainWindow(QMainWindow):
 
     def send_message(self):
         """
-        Функция отправки сообщения текущему собеседнику.
+        Метод отправки сообщения текущему собеседнику.
         Реализует шифрование сообщения и его отправку.
         :return:
         """
@@ -447,16 +447,19 @@ class ClientMainWindow(QMainWindow):
             self.history_list_update()
 
     def action_bold(self):
+        """Метод изменения вводимого текста на жирный"""
         myFont = QFont()
         myFont.setBold(True)
         self.ui.text_message.setFont(myFont)
 
     def action_italic(self):
+        """Метод изменения вводимого текста на курсив """
         myFont = QFont()
         myFont.setItalic(True)
         self.ui.text_message.setFont(myFont)
 
     def action_underlined(self):
+        """Метод изменения вводимого текста на подчёркнутый"""
         myFont = QFont()
         myFont.setUnderline(True)
         self.ui.text_message.setFont(myFont)
@@ -540,6 +543,7 @@ class ClientMainWindow(QMainWindow):
 
 
 class AvatarWindow(QWidget):
+    """Класс - окно сохранения аватара пользователя."""
     def __init__(self, parent):
         super().__init__(parent, Qt.Window)
         self.main = parent
@@ -640,6 +644,11 @@ class AvatarWindow(QWidget):
         self.move(left, top)
 
     def resize_crop(self, image):
+        """
+        Метод, масштабирующий и обрезающий изображение
+        :param image: Входное изображение
+        :return: Отредактированное изображение
+        """
         # Изменение размера до допустимого максимума
         old_size = image.size
         ratio = float(self.width) / max(old_size)
@@ -650,6 +659,7 @@ class AvatarWindow(QWidget):
         return image
 
     def reload_image(self, file_path):
+        """Метод, обновляющий изображение в окне"""
         image = ImageQt(file_path.to_qt())
         pix_map = QPixmap.fromImage(image)
         self.label.resize(self.width, self.height)
@@ -661,6 +671,7 @@ class AvatarWindow(QWidget):
         self.label.setPixmap(pix_map)
 
     def open_dialog(self):
+        """Метод, описывающий логику окна открытия изображения"""
         file_path = QFileDialog.getOpenFileName(self, 'Открыть файл')[0]
         if file_path:
             image = Image.open(file_path)
@@ -669,6 +680,7 @@ class AvatarWindow(QWidget):
             self.reload_image(self.filtering_image)
 
     def save_dialog(self):
+        """Метод, описывающий логику кнопки сохранения изображения"""
         if self.current_image:
             image = self.resize_crop(self.current_image.image)
             img_path = f'avatars/{self.main.transport.user_name}.jpg'
@@ -676,11 +688,17 @@ class AvatarWindow(QWidget):
             self.main.database.save_avatar(img_path)
 
     def return_original_image(self):
+        """Метод, возвращающий исходное изображение"""
         if self.filtering_image:
             self.current_image = self.filtering_image
             self.reload_image(self.filtering_image)
 
     def process_filter(self, filter_name):
+        """
+        Метод, запускающий обработку изображения
+        :param filter_name: Название фильтра
+        :return: Отредактированное изображение
+        """
         if self.filtering_image:
             filter_method = getattr(self.filtering_image, filter_name)
             result = filter_method()
@@ -689,6 +707,7 @@ class AvatarWindow(QWidget):
 
 
 class ProcessingImage:
+    """Класс для обработки изображения"""
     def __init__(self, image):
         self.image = image.copy()
         self.draw = ImageDraw.Draw(self.image)
@@ -700,6 +719,7 @@ class ProcessingImage:
         return self.image.convert('RGBA')
 
     def grey(self):
+        """Метод, применябщий фильтр оттенков серого"""
         new_image = ProcessingImage(self.image)
         for i in range(new_image.width):
             for j in range(new_image.height):
@@ -711,6 +731,7 @@ class ProcessingImage:
         return new_image
 
     def bw(self):
+        """Метод, применябщий черно-белый фильтр"""
         new_image = ProcessingImage(self.image)
         factor = 50
         for i in range(new_image.width):
@@ -727,6 +748,7 @@ class ProcessingImage:
         return new_image
 
     def negative(self):
+        """Метод, применябщий фильтр инверсии"""
         new_image = ProcessingImage(self.image)
         for i in range(new_image.width):
             for j in range(new_image.height):
@@ -737,6 +759,7 @@ class ProcessingImage:
         return new_image
 
     def sepia(self):
+        """Метод, применябщий фильтр сепия"""
         new_image = ProcessingImage(self.image)
         depth = 30
         for i in range(new_image.width):
