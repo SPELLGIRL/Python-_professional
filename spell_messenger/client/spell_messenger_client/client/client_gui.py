@@ -669,10 +669,11 @@ class AvatarWindow(QWidget):
             self.reload_image(self.filtering_image)
 
     def save_dialog(self):
-        image = self.resize_crop(self.current_image.image)
-        img_path = f'avatars/{self.main.transport.user_name}.jpg'
-        image.save(os.path.join(STATIC, img_path))
-        self.main.database.save_avatar(img_path)
+        if self.current_image:
+            image = self.resize_crop(self.current_image.image)
+            img_path = f'avatars/{self.main.transport.user_name}.jpg'
+            image.save(os.path.join(STATIC, img_path))
+            self.main.database.save_avatar(img_path)
 
     def return_original_image(self):
         if self.filtering_image:
