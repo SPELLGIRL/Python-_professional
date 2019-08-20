@@ -6,25 +6,29 @@ Server package
 
 Использование
 
-Модуль подерживает аргементы командной стороки:
+* ``python spell_messenger_server``
+* ``python spell_messenger_server/__main__.py``
+* ``python spell_messenger_server/main.py``
+
+Модуль подерживает аргементы командной строки:
 
 1. -p - Порт на котором принимаются соединения.
-2. -a - Адрес с которого принимаются соединения.
-3. -m - Выбор режима запуска (gui/console).
+2. -a - Адрес прослушиваемого интерфейса.
+3. -m - Выбор режима запуска (gui/console), по умолчанию gui.
 
 Примеры использования:
 
-``python server -p 8080``
+``python spell_messenger_server -p 8080``
 
 *Запуск сервера на порту 8080*
 
-``python server -a localhost``
+``python spell_messenger_server -a localhost``
 
 *Запуск сервера принимающего только соединения с localhost*
 
-``python server -m gui``
+``python spell_messenger_server -m console``
 
-*Запуск с графической оболочкой и настройками по умолчанию*
+*Запуск с настройками по умолчанию без графической оболочки*
 
 .. toctree::
    :maxdepth: 2
