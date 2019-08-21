@@ -6,7 +6,7 @@ from sqlalchemy import create_engine, exists
 from sqlalchemy.orm import sessionmaker
 
 from client.settings import DATABASE
-from .models import Base, Contact, MessageHistory, ConnectedUser
+from .models import Base, Contact, MessageHistory, ConnectedUser, User
 
 
 class Repository:
@@ -16,6 +16,7 @@ class Repository:
     SQLAlchemy ORM и используется декларативный подход.
     """
     def __init__(self, name):
+        self.user_name = name
         if not os.path.exists(DATABASE):
             os.mkdir(DATABASE)
         self.engine = create_engine(
@@ -84,6 +85,40 @@ class Repository:
         message_row = MessageHistory(contact, direction, message)
         self.session.add(message_row)
         self.session.commit()
+
+    def get_user_by_name(self, name: str):
+        """
+        Метод получения объекта пользователя по его имени.
+        :param name: Имя клиента
+        :return: Объект клиента
+        """
+        user = self.session.query(User).filter(User.name == name)
+        return user.first() if user.count() else None
+
+    def add_user(self):
+        """
+        Метод добавления пользователя.
+        Создаёт запись в таблице входивших пользователей.
+        :return:
+        """
+        user = self.get_user_by_name(self.user_name)
+        if not user:
+            user = User(self.user_name)
+            self.session.add(user)
+            self.session.commit()
+        return user
+
+    def save_avatar(self, img_path):
+        """
+        Метод добавления аватара пользователя.
+        :param img_path: Путь к изображению
+        :return:
+        """
+        user = self.get_user_by_name(self.user_name)
+        if user:
+            user.avatar = img_path
+            self.session.add(user)
+            self.session.commit()
 
     def get_history(self, contact=None) -> list:
         """

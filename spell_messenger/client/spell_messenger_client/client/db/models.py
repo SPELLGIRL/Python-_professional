@@ -59,3 +59,19 @@ class MessageHistory(Base):
         return f'<Сообщение ' \
                f'{"отправлено" if self.direction == "in" else "получено от"}' \
                f' {self.contact}, {self.time}>'
+
+
+class User(Base):
+    """
+    Класс - таблица входивших пользователей.
+    """
+    __tablename__ = 'user'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    avatar = Column(String)
+
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return f'<Пользователь {self.name}>'

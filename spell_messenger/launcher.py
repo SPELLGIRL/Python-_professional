@@ -3,6 +3,8 @@ import subprocess
 import time
 from argparse import ArgumentParser
 
+CUR_DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 class Launcher:
     """
@@ -64,24 +66,38 @@ class Launcher:
         time.sleep(1)
         print('Запускаем сервер...')
         if self.__server_mode == 'gui':
-            self.__server = subprocess.Popen(
-                'python server/spell_messenger_server -m gui')
+            self.__server = subprocess.Popen([
+                'python',
+                os.path.join(CUR_DIR, 'server/spell_messenger_server'), '-m',
+                'gui'
+            ])
         else:
             self.__server = subprocess.Popen(
-                'python server/spell_messenger_server',
+                [
+                    'python',
+                    os.path.join(CUR_DIR, 'server/spell_messenger_server'),
+                    '-m', 'gui'
+                ],
                 creationflags=subprocess.CREATE_NEW_CONSOLE)
         time.sleep(2)
         print('Запускаем клиентов...')
         for i in range(self.__num):
             if self.__client_mode == 'gui':
                 self.__clients.append(
-                    subprocess.Popen(
-                        f'python client/spell_messenger_client -u test{i} -p test{i} -m gui'
-                    ))
+                    subprocess.Popen([
+                        'python',
+                        os.path.join(CUR_DIR, 'client/spell_messenger_client'),
+                        '-u', f'test{i}', '-p', f'test{i}', '-m', 'gui'
+                    ]))
             else:
                 self.__clients.append(
                     subprocess.Popen(
-                        f'python client/spell_messenger_client -u test{i} -p test{i}',
+                        [
+                            'python',
+                            os.path.join(CUR_DIR,
+                                         'client/spell_messenger_client'),
+                            '-u', f'test{i}', '-p', f'test{i}'
+                        ],
                         creationflags=subprocess.CREATE_NEW_CONSOLE))
         time.sleep(10)
 
@@ -137,7 +153,7 @@ def run():
     Функция запуска.
     :return:
     """
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    os.chdir(CUR_DIR)
     args = parse_args()
     launcher = Launcher(args.num, args.run, args.sm, args.cm)
     launcher.main()
