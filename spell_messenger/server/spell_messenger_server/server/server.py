@@ -9,6 +9,7 @@
 -a <addr> - I​P-адрес для прослушивания ​
 (по умолчанию слушает все доступные адреса).
 """
+import asyncio
 import binascii
 import hashlib
 import hmac
@@ -48,9 +49,9 @@ class Dispatcher:
         # Набор байтов в hex представлении
         self.random_str = binascii.hexlify(os.urandom(64))
         self.status = False
-        self.receive()
-        self.process()
-        self.release()
+        asyncio.run(self.receive())
+        asyncio.run(self.process())
+        asyncio.run(self.release())
 
     def create_digest(self, password: str):
         """
@@ -112,17 +113,17 @@ class Dispatcher:
                 self.status = False
                 return forbidden(text='Неверный пароль.')
 
-    def receive(self):
+    async def receive(self):
         """
         Метод, принимающий сообщения от клиента
         :return:
         """
-        requests = receive(self.sock, self.__logger)
+        requests = await receive(self.sock, self.__logger)
         if not requests:
             raise Exception
         self.__in.extend(requests)
 
-    def process(self):
+    async def process(self):
         """
         Метод, запускающий обработку сообщений клиента
         :return:
@@ -131,14 +132,14 @@ class Dispatcher:
             request = self.__in.pop()
             if not request.sender:
                 request.sender = self.user_name
-            response = self.run_action(request)
+            response = await self.run_action(request)
             if isinstance(response, Message):
                 self.__out.append(response)
             else:
                 self.__out.extend(response)
 
     @login_required
-    def run_action(self, request: Message):
+    async def run_action(self, request: Message):
         """
         Метод, обрабатывающий сообщения от клиента
         :param request: Сообщение клиента
@@ -212,7 +213,7 @@ class Dispatcher:
         else:
             return error('Действие недоступно')
 
-    def release(self, names: list = None):
+    async def release(self, names: list = None):
         """
         Метод, отсылающий ответы клиенту
         :param names: Список подключенных клиентов
@@ -284,54 +285,66 @@ class Server(threading.Thread, metaclass=ServerVerifier):
                                                 self.__client_sockets, [], 0)
                     except Exception:
                         pass
-                    self.__input(r)
-                    self.__process()
-                    self.__output(w)
+                    asyncio.run(self.__input(r))
+                    asyncio.run(self.__process())
+                    asyncio.run(self.__output(w))
 
         except KeyboardInterrupt:
             info_msg = 'Сервер остановлен по команде пользователя.'
             self.__logger.info(info_msg)
             print(info_msg)
 
-    def __input(self, clients: list):
+    async def __input(self, clients: list):
         """
         Метод, запускающий процессы получения сообщений.
         :param clients: Список подключенных клиентов
         :return:
         """
-        for sock in clients:
+        async def input_loop(sock, s):
             try:
-                dispatcher = self.__socket_dispatcher[sock]
-                dispatcher.receive()
-                self.__in.append(dispatcher)
+                dispatcher = s.__socket_dispatcher[sock]
+                await dispatcher.receive()
+                s.__in.append(dispatcher)
             except Exception:
-                self.__remove_client(sock)
+                s.__remove_client(sock)
 
-    def __process(self):
+        for client in clients:
+            task = asyncio.create_task(input_loop(client, self))
+            await task
+
+    async def __process(self):
         """
         Метод, запускающий процессы обработки сообщений.
         :return:
         """
+        async def process_loop(d, s):
+            await d.process()
+            s.__out.append(d)
+
         while len(self.__in):
             dispatcher = self.__in.pop()
-            dispatcher.process()
-            self.__out.append(dispatcher)
+            task = asyncio.create_task(process_loop(dispatcher, self))
+            await task
 
-    def __output(self, clients: list):
+    async def __output(self, clients: list):
         """
         Метод, запускающий процессы отправки ответов.
         :param clients: Список подключенных клиентов.
         :return:
         """
-        while len(self.__out):
-            dispatcher = self.__out.pop()
+        async def output_loop(d, s):
             try:
-                if dispatcher.sock in clients:
-                    dispatcher.release(self.__name_socket)
+                if d.sock in clients:
+                    await d.release(s.__name_socket)
                 else:
                     raise ConnectionRefusedError
             except Exception:
-                self.__remove_client(dispatcher.sock)
+                s.__remove_client(d.sock)
+
+        while len(self.__out):
+            dispatcher = self.__out.pop()
+            task = asyncio.create_task(output_loop(dispatcher, self))
+            await task
 
     def __remove_client(self, client):
         """

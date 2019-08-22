@@ -1,5 +1,6 @@
 """Утилиты для работы с протоколом."""
 
+import asyncio
 import json
 import time
 
@@ -132,7 +133,7 @@ def forbidden(**kwargs) -> Message:
     return Message(data, **kwargs)
 
 
-def receive(sock, logger) -> list:
+async def receive(sock, logger) -> list:
     """
     Функция приёма сообщений от удалённых компьютеров.
     Принимает сообщения JSON, декодирует полученное сообщение
@@ -144,7 +145,8 @@ def receive(sock, logger) -> list:
     """
     requests = []
     try:
-        bytes_response = sock.recv(MAX_PACKAGE_LENGTH)
+        bytes_response = await asyncio.get_event_loop().sock_recv(
+            sock, MAX_PACKAGE_LENGTH)
     except UnicodeDecodeError:
         text = 'Соединение разорвано'
         logger.info(text)
