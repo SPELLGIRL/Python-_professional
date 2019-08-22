@@ -233,7 +233,7 @@ class Dispatcher:
 class Server(threading.Thread, metaclass=ServerVerifier):
     __port = Port()
 
-    def __init__(self, address: str, database):
+    def __init__(self, address: tuple, database):
         self.__logger = server_logger
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__repo = database
