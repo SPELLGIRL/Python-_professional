@@ -41,7 +41,7 @@ if __name__ == '__main__':
     for root, dirs, files in os.walk(clear_dir[args.mode]):
         for file in files:
             if file.endswith(
-                ('.log', '.db', '.key')
+                ('.log', '.db', '.db-journal', '.key')
             ) or re.fullmatch(pattern, file):
                 print(os.path.join(root, file))
                 os.remove(os.path.join(root, file))
