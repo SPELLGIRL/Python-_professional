@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 """Модуль с моделями таблиц для БД"""
 
 import datetime
