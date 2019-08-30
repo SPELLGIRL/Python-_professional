@@ -146,6 +146,7 @@ class Repository:
     def get_connected(self, search=None) -> list:
         """
         Метод возвращающий список подключённых пользователей.
+        :param search: Строка-фильтр
         :return:
         """
         if search:
