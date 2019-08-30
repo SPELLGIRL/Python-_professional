@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 """Константы для jim протокола, настройки"""
 
 # Формат даты
@@ -50,3 +49,6 @@ SERVER_ERROR = 500
 
 # Кортеж из кодов ответов
 RESPONSE_CODES = (BASIC_NOTICE, OK, ACCEPTED, WRONG_REQUEST, SERVER_ERROR)
+
+# Системные имена
+RESERVED_NAMES = ('*', 'Общий_чат', 'Гость', '')

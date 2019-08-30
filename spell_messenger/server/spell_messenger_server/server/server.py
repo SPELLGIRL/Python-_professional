@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 """
 Функции ​​сервера:​
 - принимает ​с​ообщение ​клиента;
@@ -154,6 +153,10 @@ class Dispatcher:
             contacts = request.destination.replace(' ', '').split(',')
             if len(contacts) == 1 and (not contacts[0] or contacts[0] == '*'):
                 contacts = self.__repo.get_contact_list(request.sender)
+            if len(contacts) == 1 and contacts[0] == 'Общий_чат':
+                contacts = self.__repo.users_list(active=True)
+                contacts.remove(request.sender)
+                request.sender = 'Общий_чат'
             responses = []
             for contact in contacts:
                 data = {

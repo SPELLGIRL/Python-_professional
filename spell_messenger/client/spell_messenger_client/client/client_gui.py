@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import QListView, QMenuBar, QMenu, QStatusBar, QAction, \
     QTextEdit, QWidget, QMainWindow, qApp, QMessageBox, QDialog, QPushButton, \
     QLineEdit, QLabel, QComboBox, QFileDialog, QHBoxLayout, QDesktopWidget
 
+from jim.config import RESERVED_NAMES
 from jim.utils import Message
 from .exceptions import ServerError
 from .settings import STATIC
@@ -278,23 +279,24 @@ class ClientMainWindow(QMainWindow):
         Метод активации чата с собеседником.
         :return:
         """
-        # Запрашиваем публичный ключ пользователя и создаём объект шифрования
-        try:
-            self.current_chat_key = self.transport.key_request(
-                self.current_chat)
-            if self.current_chat_key:
-                self.encryptor = PKCS1_OAEP.new(
-                    RSA.import_key(self.current_chat_key))
-        except (OSError):
-            self.current_chat_key = None
-            self.encryptor = None
+        if self.current_chat not in RESERVED_NAMES:
+            # Запрашиваем публичный ключ пользователя и создаём объект шифрования
+            try:
+                self.current_chat_key = self.transport.key_request(
+                    self.current_chat)
+                if self.current_chat_key:
+                    self.encryptor = PKCS1_OAEP.new(
+                        RSA.import_key(self.current_chat_key))
+            except (OSError):
+                self.current_chat_key = None
+                self.encryptor = None
 
-        # Если ключа нет то ошибка, что не удалось начать чат с пользователем
-        if not self.current_chat_key:
-            self.messages.warning(
-                self, 'Ошибка',
-                'Для выбранного пользователя нет ключа шифрования.')
-            return
+            # Если ключа нет то ошибка, что не удалось начать чат с пользователем
+            if not self.current_chat_key:
+                self.messages.warning(
+                    self, 'Ошибка',
+                    'Для выбранного пользователя нет ключа шифрования.')
+                return
 
         # Ставим надпись и активируем кнопки
         self.ui.label_new_message.setText(
@@ -423,14 +425,16 @@ class ClientMainWindow(QMainWindow):
         self.ui.text_message.clear()
         if not message_text:
             return
-        message_text_encrypted = self.encryptor.encrypt(
-            message_text.encode('utf8'))
-        message_text_encrypted_base64 = base64.b64encode(
-            message_text_encrypted)
+        if self.current_chat == 'Общий_чат':
+            _msg = f'{self.transport.user_name}: {message_text}'
+        else:
+            message_text_encrypted = self.encryptor.encrypt(
+                message_text.encode('utf8'))
+            message_text_encrypted_base64 = base64.b64encode(
+                message_text_encrypted)
+            _msg = message_text_encrypted_base64.decode('ascii')
         try:
-            self.transport.send_message(
-                self.current_chat,
-                message_text_encrypted_base64.decode('ascii'))
+            self.transport.send_message(self.current_chat, _msg)
         except ServerError as err:
             self.messages.critical(self, 'Ошибка', err.text)
         except OSError as err:
@@ -483,20 +487,22 @@ class ClientMainWindow(QMainWindow):
         :return:
         """
         sender = message.sender
-        # Получаем строку байтов
-        encrypted_message = base64.b64decode(message.text)
-        # Декодируем строку, при ошибке выдаём сообщение и завершаем функцию
-        try:
-            decrypted_message = self.transport.decrypter.decrypt(
-                encrypted_message)
-        except (ValueError, TypeError):
-            self.messages.warning(self, 'Ошибка',
-                                  'Не удалось декодировать сообщение.')
-            return
+        if sender == 'Общий_чат':
+            decrypted_message = message.text
+        else:
+            # Получаем строку байтов
+            encrypted_message = base64.b64decode(message.text)
+            try:
+                # Декодируем строку, при ошибке выдаём сообщение и завершаем функцию
+                decrypted_message = self.transport.decrypter.decrypt(
+                    encrypted_message).decode('utf8')
+            except (ValueError, TypeError):
+                self.messages.warning(self, 'Ошибка',
+                                      'Не удалось декодировать сообщение.')
+                return
         # Сохраняем сообщение в базу и обновляем историю сообщений
         # или открываем новый чат.
-        self.database.save_message(sender, 'in',
-                                   decrypted_message.decode('utf8'))
+        self.database.save_message(sender, 'in', decrypted_message)
         if sender == self.current_chat:
             self.history_list_update()
         else:
