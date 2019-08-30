@@ -282,7 +282,7 @@ class Gui(QObject):
             main_window = ClientMainWindow(self.__repo, self)
             main_window.make_connection(self)
             main_window.setWindowTitle(
-                f'Чат Программа alpha release - {self.__client.user_name}')
+                f'SPELL Messenger - Client ({self.__client.user_name})')
             self.client_app.exec_()
         except (ConnectionResetError, ConnectionAbortedError):
             self.connection_lost.emit()

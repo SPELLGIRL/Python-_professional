@@ -112,7 +112,7 @@ class UiMainClientWindow(object):
     def retranslate_ui(self, main_client_window):
         _translate = QCoreApplication.translate
         main_client_window.setWindowTitle(
-            _translate("MainClientWindow", "Чат Программа alpha release"))
+            _translate("MainClientWindow", "SPELL Messenger - Client"))
         self.label_contacts.setText(
             _translate("MainClientWindow", "Список контактов:"))
         self.btn_add_contact.setText(
