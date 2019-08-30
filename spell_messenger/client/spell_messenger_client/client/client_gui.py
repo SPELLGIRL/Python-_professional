@@ -865,9 +865,13 @@ class AddContactDialog(QDialog):
         self.selector.setFixedSize(200, 20)
         self.selector.move(10, 30)
 
-        self.btn_refresh = QPushButton('Обновить список', self)
+        self.btn_refresh = QPushButton('Поиск', self)
         self.btn_refresh.setFixedSize(100, 30)
-        self.btn_refresh.move(60, 60)
+        self.btn_refresh.move(10, 60)
+
+        self.filter = QLineEdit(self)
+        self.filter.setFixedSize(100, 25)
+        self.filter.move(120, 62)
 
         self.btn_ok = QPushButton('Добавить', self)
         self.btn_ok.setFixedSize(100, 30)
@@ -893,10 +897,13 @@ class AddContactDialog(QDialog):
         self.selector.clear()
         # множества всех контактов и контактов клиента
         contacts_list = set(self.database.get_contacts())
-        users_list = set(self.database.get_connected())
+        users_list = set(self.database.get_connected(self.filter.text().strip()))
         # Удалим сами себя из списка пользователей,
         # чтобы нельзя было добавить самого себя
-        users_list.remove(self.transport.user_name)
+        try:
+            users_list.remove(self.transport.user_name)
+        except Exception:
+            pass
         # Добавляем список возможных контактов
         self.selector.addItems(users_list - contacts_list)
 
