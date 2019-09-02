@@ -156,6 +156,8 @@ class Dispatcher:
             if len(contacts) == 1 and contacts[0] == 'Общий_чат':
                 contacts = self.__repo.users_list(active=True)
                 contacts.remove(request.sender)
+                self.__repo.add_general_chat_history(request.sender,
+                                                     request.text)
                 request.sender = 'Общий_чат'
             responses = []
             for contact in contacts:
@@ -413,5 +415,11 @@ def parse_args(default_ip: str = DEFAULT_IP, default_port: int = DEFAULT_PORT):
                         nargs='?',
                         choices=['gui', 'console'],
                         help='Mode: GUI, Console (default console)')
+    parser.add_argument('-db',
+                        default='sqlite',
+                        type=str.lower,
+                        nargs='?',
+                        choices=['sqlite', 'mongo'],
+                        help='DB Mode: SQLite, MongoDB (default SQLite)')
     result = parser.parse_args()
     return result

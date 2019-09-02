@@ -8,7 +8,7 @@ import threading
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QApplication, QMessageBox
 
-from .db.repository import Repository
+from .db.repository import Repository, MongoRepository
 from .server import parse_args, Server
 from .server_gui import MainWindow, gui_create_model, HistoryWindow, \
     create_stat_model, ConfigWindow, DelUserDialog
@@ -47,7 +47,11 @@ class Console:
     def __init__(self):
         args = parse_args(default_ip=config['SETTINGS']['listen_address'],
                           default_port=config['SETTINGS']['default_port'])
-        self.__server = Server((args.a, args.p), Repository())
+        if args.db == 'mongo':
+            _repo = MongoRepository()
+        else:
+            _repo = Repository()
+        self.__server = Server((args.a, args.p), _repo)
 
     def main(self):
         """
@@ -64,8 +68,11 @@ class Gui:
     def __init__(self):
         args = parse_args(default_ip=config['SETTINGS']['listen_address'],
                           default_port=config['SETTINGS']['default_port'])
-        self.database = Repository(config['SETTINGS']['Database_path'],
-                                   config['SETTINGS']['Database_file'])
+        if args.db == 'mongo':
+            self.database = MongoRepository()
+        else:
+            self.database = Repository(config['SETTINGS']['Database_path'],
+                                       config['SETTINGS']['Database_file'])
         self.server = Server((args.a, args.p), self.database)
         self.server.handler = self
         self.server.daemon = True
