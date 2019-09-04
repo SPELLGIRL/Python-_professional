@@ -28,7 +28,7 @@ class Console:
         self.__client = Client((parsed_args.addr, parsed_args.port))
         self.__client.user_name, self.__client.password = \
             self.__validate_username(parsed_args.user, parsed_args.password)
-        if parsed_args.db == 'mongo':
+        if parsed_args.database == 'mongo':
             self.__repo = MongoRepository(self.__client.user_name)
         else:
             self.__repo = Repository(self.__client.user_name)
@@ -256,7 +256,7 @@ class Gui(QObject):
         self.__client.user_name, self.__client.password = \
             self.__validate_username(parsed_args.user, parsed_args.password)
         self.__client.keys = self.__client.create_keys()
-        if parsed_args.db == 'mongo':
+        if parsed_args.database == 'mongo':
             self.__repo = MongoRepository(self.__client.user_name)
         else:
             self.__repo = Repository(self.__client.user_name)
