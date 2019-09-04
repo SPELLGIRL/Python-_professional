@@ -1,9 +1,20 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import os
 import subprocess
 import time
+from sys import platform
 from argparse import ArgumentParser
 
 CUR_DIR = os.path.dirname(os.path.abspath(__file__))
+
+if platform == "win32":
+    PYTHON = 'python'
+elif platform == "linux" or platform == "linux2":
+    PYTHON = 'python3'
+elif platform == "darwin":
+    PYTHON = 'python3'
 
 
 class Launcher:
@@ -67,14 +78,14 @@ class Launcher:
         print('Запускаем сервер...')
         if self.__server_mode == 'gui':
             self.__server = subprocess.Popen([
-                'python',
+                PYTHON,
                 os.path.join(CUR_DIR, 'server/spell_messenger_server'), '-m',
                 'gui'
             ])
         else:
             self.__server = subprocess.Popen(
                 [
-                    'python',
+                    PYTHON,
                     os.path.join(CUR_DIR, 'server/spell_messenger_server'),
                     '-m', 'gui'
                 ],
@@ -85,7 +96,7 @@ class Launcher:
             if self.__client_mode == 'gui':
                 self.__clients.append(
                     subprocess.Popen([
-                        'python',
+                        PYTHON,
                         os.path.join(CUR_DIR, 'client/spell_messenger_client'),
                         '-u', f'test{i}', '-p', f'test{i}', '-m', 'gui'
                     ]))
@@ -93,7 +104,7 @@ class Launcher:
                 self.__clients.append(
                     subprocess.Popen(
                         [
-                            'python',
+                            PYTHON,
                             os.path.join(CUR_DIR,
                                          'client/spell_messenger_client'),
                             '-u', f'test{i}', '-p', f'test{i}'

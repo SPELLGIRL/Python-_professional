@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Модуль, описывающий работу с БД"""
 
 import os
@@ -141,12 +143,18 @@ class Repository:
         query = self.session.query(Contact.name).all()
         return [value for (value, ) in query]
 
-    def get_connected(self) -> list:
+    def get_connected(self, search=None) -> list:
         """
         Метод возвращающий список подключённых пользователей.
+        :param search: Строка-фильтр
         :return:
         """
-        query = self.session.query(ConnectedUser.name).all()
+        if search:
+            search = f'%{search}%'
+            query = self.session.query(ConnectedUser.name).filter(
+                ConnectedUser.name.like(search)).all()
+        else:
+            query = self.session.query(ConnectedUser.name).all()
         return [value for (value, ) in query]
 
     def check_contact(self, contact: str) -> bool:

@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import socket
 import sys
 from random import randint
@@ -274,11 +277,12 @@ class Gui(QObject):
             if contacts:
                 for message in contacts[1:]:
                     self.__repo.add_contact(message.user)
+            self.__repo.add_contact('Общий_чат')
             self.__listen_thread.start()
             main_window = ClientMainWindow(self.__repo, self)
             main_window.make_connection(self)
             main_window.setWindowTitle(
-                f'Чат Программа alpha release - {self.__client.user_name}')
+                f'SPELL Messenger - Client ({self.__client.user_name})')
             self.client_app.exec_()
         except (ConnectionResetError, ConnectionAbortedError):
             self.connection_lost.emit()
@@ -319,7 +323,7 @@ class Gui(QObject):
         :return:
         """
         while True:
-            if user_name == 'Гость' or not user_name or not password:
+            if user_name in RESERVED_NAMES or not user_name or not password:
                 start_dialog = UserNameDialog()
                 self.client_app.exec_()
                 # Если пользователь ввёл имя и нажал ОК,

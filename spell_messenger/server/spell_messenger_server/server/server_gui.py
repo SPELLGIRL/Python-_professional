@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import sys
 import time
 
@@ -91,7 +94,7 @@ class MainWindow(QMainWindow):
         self.toolbar.addAction(self.remove_btn)
 
         self.setFixedSize(800, 600)
-        self.setWindowTitle('Messaging Server alpha release')
+        self.setWindowTitle('SPELL Messenger - Server')
 
         self.label = QLabel('Список подключённых клиентов:', self)
         self.label.setFixedSize(240, 15)
