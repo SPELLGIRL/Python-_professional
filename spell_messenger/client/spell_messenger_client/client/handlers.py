@@ -14,7 +14,7 @@ from jim.config import *
 from jim.utils import Message, receive
 from .client import Client, log_decorator
 from .client_gui import ClientMainWindow, UserNameDialog
-from .db.repository import Repository
+from .db.repository import Repository, MongoRepository
 from .exceptions import *
 
 socket_lock = Lock()
@@ -28,7 +28,10 @@ class Console:
         self.__client = Client((parsed_args.addr, parsed_args.port))
         self.__client.user_name, self.__client.password = \
             self.__validate_username(parsed_args.user, parsed_args.password)
-        self.__repo = Repository(self.__client.user_name)
+        if parsed_args.db == 'mongo':
+            self.__repo = MongoRepository(self.__client.user_name)
+        else:
+            self.__repo = Repository(self.__client.user_name)
         self.__listen_thread = Thread(target=self.receiver)
         self.__listen_thread.daemon = True
 
@@ -253,7 +256,10 @@ class Gui(QObject):
         self.__client.user_name, self.__client.password = \
             self.__validate_username(parsed_args.user, parsed_args.password)
         self.__client.keys = self.__client.create_keys()
-        self.__repo = Repository(self.__client.user_name)
+        if parsed_args.db == 'mongo':
+            self.__repo = MongoRepository(self.__client.user_name)
+        else:
+            self.__repo = Repository(self.__client.user_name)
         self.__client.handler = self
         self.user_name = self.__client.user_name
         self.decrypter = PKCS1_OAEP.new(self.__client.keys)
@@ -311,7 +317,8 @@ class Gui(QObject):
                     message = messages.pop()
                     checked_msg = self.__client.check_response(message)
                     self.receive_callback(checked_msg)
-        except (ConnectionError, ConnectionAbortedError, ConnectionResetError):
+        except (ConnectionError, ConnectionAbortedError, ConnectionResetError,
+                OSError):
             self.__listen_thread.is_alive = False
             self.connection_lost.emit()
 

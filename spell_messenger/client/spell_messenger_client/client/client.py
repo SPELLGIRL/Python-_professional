@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 """
 Функции ​клиента:​
 - сформировать ​​presence-сообщение;
@@ -267,5 +266,12 @@ def parse_args(default_ip: str = DEFAULT_IP, default_port: int = DEFAULT_PORT):
                         nargs='?',
                         choices=['gui', 'console'],
                         help='Mode: GUI, Console (default console)')
+    parser.add_argument('-db',
+                        '--database',
+                        default='sqlite',
+                        type=str.lower,
+                        nargs='?',
+                        choices=['sqlite', 'mongo'],
+                        help='DB Mode: SQLite, MongoDB (default SQLite)')
     result = parser.parse_args()
     return result

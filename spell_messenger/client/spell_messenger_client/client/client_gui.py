@@ -246,17 +246,27 @@ class ClientMainWindow(QMainWindow):
         for i in range(start_index, length):
             item = sorted_list[i]
             if item[1] == 'in':
-                mess = QStandardItem(
-                    f'Входящее от '
-                    f'{item[3].replace(microsecond=0)}:\n {item[2]}')
+                try:
+                    mess = QStandardItem(
+                        f'Входящее от '
+                        f'{item[3].replace(microsecond=0)}:\n {item[2]}')
+                except Exception:
+                    mess = QStandardItem(
+                        f'Входящее от '
+                        f'{item[3]}:\n {item[2]}')
                 mess.setEditable(False)
                 mess.setBackground(QBrush(QColor(255, 213, 213)))
                 mess.setTextAlignment(Qt.AlignLeft)
                 self.history_model.appendRow(mess)
             else:
-                mess = QStandardItem(
-                    f'Исходящее от '
-                    f'{item[3].replace(microsecond=0)}:\n {item[2]}')
+                try:
+                    mess = QStandardItem(
+                        f'Исходящее от '
+                        f'{item[3].replace(microsecond=0)}:\n {item[2]}')
+                except Exception:
+                    mess = QStandardItem(
+                        f'Исходящее от '
+                        f'{item[3]}:\n {item[2]}')
                 mess.setEditable(False)
                 mess.setTextAlignment(Qt.AlignRight)
                 mess.setBackground(QBrush(QColor(204, 255, 204)))
