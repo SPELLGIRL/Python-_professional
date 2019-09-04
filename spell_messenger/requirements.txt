@@ -3,5 +3,6 @@ Pillow
 pycryptodome
 pycryptodomex
 PyQt5
+pymongo
 SQLAlchemy
 Sphinx

@@ -58,7 +58,11 @@ def create_stat_model(database):
         user = QStandardItem(user)
         user.setEditable(False)
         if last_seen:
-            last_seen = QStandardItem(str(last_seen.replace(microsecond=0)))
+            try:
+                last_seen = QStandardItem(str(
+                    last_seen.replace(microsecond=0)))
+            except Exception:
+                last_seen = QStandardItem(str(last_seen))
         else:
             last_seen = QStandardItem('')
         last_seen.setEditable(False)
@@ -175,8 +179,7 @@ class ConfigWindow(QDialog):
 
         self.ip_label_note = QLabel(
             ' оставьте это поле пустым, '
-            'чтобы\n принимать соединения с любых адресов.',
-            self)
+            'чтобы\n принимать соединения с любых адресов.', self)
         self.ip_label_note.move(10, 168)
         self.ip_label_note.setFixedSize(500, 30)
 

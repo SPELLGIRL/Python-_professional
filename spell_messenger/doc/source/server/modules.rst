@@ -15,6 +15,7 @@ Server package
 1. -p - Порт на котором принимаются соединения.
 2. -a - Адрес прослушиваемого интерфейса.
 3. -m - Выбор режима запуска (gui/console), по умолчанию gui.
+4. -db - Выбор БД (SQLite/mongoDB), по умолчанию SQLite.
 
 Примеры использования:
 
@@ -29,6 +30,10 @@ Server package
 ``python spell_messenger_server -m console``
 
 *Запуск с настройками по умолчанию без графической оболочки*
+
+``python spell_messenger_server -db mongo``
+
+*Запуск с настройками по умолчанию с MongoDB вместо SQLite*
 
 .. toctree::
    :maxdepth: 2
