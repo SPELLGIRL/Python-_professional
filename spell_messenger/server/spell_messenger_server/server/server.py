@@ -197,7 +197,10 @@ class Dispatcher:
             return responses
         # Если это запрос публичного ключа пользователя
         elif request.action == PUBLIC_KEY_REQUEST and request.user:
-            data = {TEXT: self.__repo.get_pubkey(request.user)}
+            data = {
+                ACTION: PUBLIC_KEY_REQUEST,
+                TEXT: self.__repo.get_pubkey(request.user)
+            }
             if data[TEXT]:
                 return success(**data)
             else:

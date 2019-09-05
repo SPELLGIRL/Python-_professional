@@ -292,32 +292,7 @@ class ClientMainWindow(QMainWindow):
         """
         if self.current_chat not in RESERVED_NAMES:
             # Запрашиваем публичный ключ пользователя и создаём объект шифрования
-            try:
-                self.current_chat_key = self.transport.key_request(
-                    self.current_chat)
-                if self.current_chat_key:
-                    self.encryptor = PKCS1_OAEP.new(
-                        RSA.import_key(self.current_chat_key))
-            except (OSError):
-                self.current_chat_key = None
-                self.encryptor = None
-
-            # Если ключа нет то ошибка, что не удалось начать чат с пользователем
-            if not self.current_chat_key:
-                self.messages.warning(
-                    self, 'Ошибка',
-                    'Для выбранного пользователя нет ключа шифрования.')
-                return
-
-        # Ставим надпись и активируем кнопки
-        self.ui.label_new_message.setText(
-            f'Введите сообщенние для {self.current_chat}:')
-        self.ui.btn_clear.setDisabled(False)
-        self.ui.btn_send.setDisabled(False)
-        self.ui.text_message.setDisabled(False)
-
-        # Заполняем окно историю сообщений по требуемому пользователю.
-        self.history_list_update()
+            self.transport.key_request(self.current_chat)
 
     def clients_list_update(self):
         """
@@ -555,6 +530,28 @@ class ClientMainWindow(QMainWindow):
                               'Потеряно соединение с сервером. ')
         self.close()
 
+    @pyqtSlot(str)
+    def set_active_user_ext(self, key: str):
+        if key:
+            self.encryptor = PKCS1_OAEP.new(
+                RSA.import_key(key))
+        # Если ключа нет то ошибка, что не удалось начать чат с пользователем
+        else:
+            self.messages.warning(
+                self, 'Ошибка',
+                'Для выбранного пользователя нет ключа шифрования.')
+            return
+
+        # Ставим надпись и активируем кнопки
+        self.ui.label_new_message.setText(
+            f'Введите сообщенние для {self.current_chat}:')
+        self.ui.btn_clear.setDisabled(False)
+        self.ui.btn_send.setDisabled(False)
+        self.ui.text_message.setDisabled(False)
+
+        # Заполняем окно историю сообщений по требуемому пользователю.
+        self.history_list_update()
+
     def make_connection(self, trans_obj):
         """
         Метод обеспечивающий соединение сигналов и слотов.
@@ -563,6 +560,7 @@ class ClientMainWindow(QMainWindow):
         """
         trans_obj.new_message.connect(self.message)
         trans_obj.connection_lost.connect(self.connection_lost)
+        trans_obj.set_active_user_ext.connect(self.set_active_user_ext)
 
 
 class AvatarWindow(QWidget):
