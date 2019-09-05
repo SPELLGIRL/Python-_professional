@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import base64
+import emoji
 import os
 
 from Crypto.Cipher import PKCS1_OAEP
@@ -179,7 +180,7 @@ class ClientMainWindow(QMainWindow):
         self.ui.action_italic.triggered.connect(self.action_italic)
         self.ui.action_underlined.triggered.connect(self.action_underlined)
         self.ui.action_smile.triggered.connect(
-            lambda: self.action_smile('img/smile.gif'))
+            lambda: self.action_smile(':smile:'))
         self.ui.text_menu.addAction(self.ui.action_bold)
         self.ui.text_menu.addAction(self.ui.action_italic)
         self.ui.text_menu.addAction(self.ui.action_underlined)
@@ -442,7 +443,7 @@ class ClientMainWindow(QMainWindow):
                 message_text.encode('utf8'))
             message_text_encrypted_base64 = base64.b64encode(
                 message_text_encrypted)
-            _msg = message_text_encrypted_base64.decode('ascii')
+            _msg = message_text_encrypted_base64.decode('utf8')
         try:
             self.transport.send_message(self.current_chat, _msg)
         except ServerError as err:
@@ -483,7 +484,10 @@ class ClientMainWindow(QMainWindow):
 
     def action_smile(self, url):
         self.ui.text_message.textCursor().insertHtml(
-            f'<img src="{os.path.join(STATIC, url)}" />')
+            emoji.emojize(url, use_aliases=True)
+        )
+        # self.ui.text_message.textCursor().insertHtml(
+        #     f'<img src="{os.path.join(STATIC, url)}" />')
 
     # Слот приёма нового сообщений
     @pyqtSlot(Message)
