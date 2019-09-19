@@ -1,4 +1,5 @@
 asyncio
+emoji
 Pillow
 pycryptodome
 pycryptodomex
