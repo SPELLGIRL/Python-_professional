@@ -293,6 +293,8 @@ class ClientMainWindow(QMainWindow):
         if self.current_chat not in RESERVED_NAMES:
             # Запрашиваем публичный ключ пользователя и создаём объект шифрования
             self.transport.key_request(self.current_chat)
+        else:
+            self.set_active_user_ext('')
 
     def clients_list_update(self):
         """
@@ -536,6 +538,8 @@ class ClientMainWindow(QMainWindow):
             self.encryptor = PKCS1_OAEP.new(
                 RSA.import_key(key))
         # Если ключа нет то ошибка, что не удалось начать чат с пользователем
+        elif self.current_chat in RESERVED_NAMES:
+            pass
         else:
             self.messages.warning(
                 self, 'Ошибка',
