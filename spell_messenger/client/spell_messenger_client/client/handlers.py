@@ -248,6 +248,7 @@ class Gui(QObject):
 
     new_message = pyqtSignal(Message)
     connection_lost = pyqtSignal()
+    set_active_user_ext = pyqtSignal(str)
 
     def __init__(self, parsed_args):
         QObject.__init__(self)
@@ -413,15 +414,13 @@ class Gui(QObject):
             FROM: self.user_name,
             USER: user_name
         }
-        with socket_lock:
-            self.__client.send(Message(**data))
-            responses = receive(self.__client.sock, self.__client.logger)
-            if responses:
-                response = responses[0]
-                if response.response and response.text:
-                    return response.text
-            self.__client.logger.error(
-                f'Не удалось получить ключ собеседника{user_name}.')
+        self.__client.send(Message(**data))
+
+    def key_response(self, response):
+        if response.response and response.text:
+            return response.text
+        self.__client.logger.error(
+            f'Не удалось получить ключ собеседника.')
 
     def receive_callback(self, response: Message) -> Message:
         """
@@ -442,4 +441,6 @@ class Gui(QObject):
         elif response.action == SEND_MSG:
             if response.sender != response.destination:
                 self.new_message.emit(response)
+        elif response.action == PUBLIC_KEY_REQUEST:
+            self.set_active_user_ext.emit(self.key_response(response))
         return response
