@@ -18,6 +18,7 @@ Client package
 3. -u или --user - имя пользователя с которым произойдёт вход в систему.
 4. -p или --password - пароль пользователя.
 5. -m или --mode - режим запуска (gui/console), по умолчанию gui
+6. -db или --database - Выбор БД (SQLite/mongoDB), по умолчанию SQLite.
 
 Все опции командной строки являются необязательными, но имя пользователя и
 пароль необходимо использовать в паре.
@@ -44,6 +45,10 @@ Client package
 * ``python spell_messenger_client -m console``
 
 *Запуск приложения с настройками по умолчанию без графической оболочки*
+
+``python spell_messenger_client -db mongo``
+
+*Запуск с настройками по умолчанию с MongoDB вместо SQLite*
 
 .. toctree::
    :maxdepth: 2
